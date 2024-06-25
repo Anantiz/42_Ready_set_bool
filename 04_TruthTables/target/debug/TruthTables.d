@@ -1,1 +1,0 @@
-/home/myos/Projects/readySet/04_TruthTables/target/debug/TruthTables: /home/myos/Projects/readySet/04_TruthTables/src/display.rs /home/myos/Projects/readySet/04_TruthTables/src/main.rs /home/myos/Projects/readySet/04_TruthTables/src/rpn/eval.rs /home/myos/Projects/readySet/04_TruthTables/src/rpn.rs

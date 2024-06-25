@@ -1,11 +1,10 @@
 mod eval;
 
-
 // Pretty explanatory
 fn ft_error_exit(msg : &str)
 {
 	println!("{}", msg);
-	std::process::exit(1);
+	panic!();
 }
 
 // For dual operations
@@ -43,7 +42,7 @@ for handling a boolean expression
 // Set: 1 0 ! & | ^ > =
 // func: negation, conjuction, disjunction, exclusive_disjunction, material_condition, logical_equivalence
 */
-fn rpn_evaluate(line : &str) -> bool
+pub fn rpn_evaluate(line : &str) -> bool
 {
 	let mut stack : Vec<bool> = Vec::new();
 
@@ -64,22 +63,4 @@ fn rpn_evaluate(line : &str) -> bool
 		}
 	}
 	return stack.pop().unwrap();
-}
-
-fn main()
-{
-	let test_cases : [&str; 7] = [
-		"1 0 &",
-		"1 1 &",
-		"1 0 |",
-		"0 0 |",
-		"0 0 =",
-		"0 1 =",
-		"1011||="
-	];
-
-	for case in test_cases.iter()
-	{
-		println!("Input: {}\nResult: {}\n", case, rpn_evaluate(case));
-	}
 }

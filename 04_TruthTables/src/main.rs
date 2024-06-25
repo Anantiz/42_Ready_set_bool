@@ -1,14 +1,14 @@
 mod rpn;
 mod display;
 
-fn update_var_states(mut var_state : u32, vars : &mut Vec<(bool, bool)>)
+fn update_var_states(mut counter : u32, vars : &mut Vec<(bool, bool)>)
 {
 	for v in vars.iter_mut()
 	{
 		if v.0 //If Variable is in the expression
 		{
-			v.1 = (var_state & 0b1) == 0b1; // Set the value of the variable to the last bit of var_state
-			var_state >>= 1;
+			v.1 = (counter & 0b1) == 0b1; // Set the value of the variable to the last bit of counter
+			counter >>= 1;
 		}
 	}
 }
@@ -45,7 +45,7 @@ fn write_expression(vars : &Vec<(bool, bool)>, line : &str) -> String
 
 // Write a truth table for the input expression
 // In e.i: A B &
-fn make_truth(line : &str)
+fn print_truth_table(line : &str)
 {
 	println!("Truth Table for: {}", line);
 
@@ -68,7 +68,6 @@ fn make_truth(line : &str)
 
 	let iter_count : u32 = iter_count(&vars);
 	let mut counter : u32 = 0;
-	let mut var_state : u32 = rpn::gray_code(counter);
 
 	// Now loop while the var_state & mask is not zero
 	while counter != iter_count
@@ -85,15 +84,14 @@ fn make_truth(line : &str)
 
 		// Get next state
 		counter += 1;
-		// var_state = rpn::gray_code(counter);
 	}
 }
 
 
 fn main()
 {
-	let line = "AB&C|";
-	make_truth(&line);
+	let line = "ABC|BD|&&";
+	print_truth_table(&line);
 
 }
 

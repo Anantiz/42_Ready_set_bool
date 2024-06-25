@@ -1,10 +1,5 @@
 mod eval;
 
-pub fn gray_code(n : u32) -> u32
-{
-	n ^ (n >> 1)
-}
-
 // Pretty explanatory
 fn ft_error_exit(msg : &str)
 {
