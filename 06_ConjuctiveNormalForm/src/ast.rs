@@ -2,49 +2,67 @@
 pub enum Expr {
     Var(char),
     Not(Box<Expr>),
-    And(Box<Expr>, Box<Expr>),
-    Or(Box<Expr>, Box<Expr>),
+    And{ left:Box<Expr>, right:Box<Expr>},
+    Or{ left:Box<Expr>, right:Box<Expr>},
 }
 
 impl Expr {
-    // Distribute negations using De Morgan's laws
 
-	pub fn negation_normal_form(self) -> Expr {
-		match self {
-			Expr::Not(inner) => match *inner {
-				Expr::And(left, right) => Expr::Or(
-					Box::new(Expr::Not(left).negation_normal_form()),
-					Box::new(Expr::Not(right).negation_normal_form()),
-				),
-				Expr::Or(left, right) => Expr::And(
-					Box::new(Expr::Not(left).negation_normal_form()),
-					Box::new(Expr::Not(right).negation_normal_form()),
-				),
-				other => Expr::Not(Box::new(other.negation_normal_form())),
-			},
-			Expr::And(left, right) => Expr::And(
-				Box::new(left.negation_normal_form()),
-				Box::new(right.negation_normal_form()),
-			),
-			Expr::Or(left, right) => Expr::Or(
-				Box::new(left.negation_normal_form()),
-				Box::new(right.negation_normal_form()),
-			),
-			other => other,
-		}
-	}
+    /// Inverts OR and AND
+    /// Negates variables or removes negation
+    pub fn invert_terms(self) -> Expr
+    {
+        match self
+        {
+            Expr::Var(c) => Expr::Not(Box::new(Expr::Var(c))),
+            Expr::Not(inner) => *inner,
+            Expr::And{left, right} => Expr::Or{
+                left : Box::new(left.invert_terms()),
+                right : Box::new(right.invert_terms())
+            },
+            Expr::Or{left, right} => Expr::And{
+                left : Box::new(left.invert_terms()),
+                right : Box::new(right.invert_terms())
+            },
+        }
+    }
+
+	// pub fn negation_normal_form(self) -> Expr {
+	// 	match self {
+	// 		Expr::Not(inner) => match *inner {
+	// 			Expr::And{left, right} => Expr::Or{
+	// 				left : Box::new(Expr::Not(left).negation_normal_form()),
+	// 				right : Box::new(Expr::Not(right).negation_normal_form()),
+    //             },
+	// 			Expr::Or{left, right} => Expr::And{
+	// 				left :Box::new(Expr::Not(left).negation_normal_form()),
+	// 				right :Box::new(Expr::Not(right).negation_normal_form()),
+    //             },
+	// 			other => Expr::Not(Box::new(other.negation_normal_form())),
+	// 		},
+	// 		Expr::And{left, right} => Expr::And{
+	// 			left : Box::new(left.negation_normal_form()),
+	// 			right : Box::new(right.negation_normal_form()),
+    //         },
+	// 		Expr::Or{left, right} => Expr::Or{
+	// 			left : Box::new(left.negation_normal_form()),
+	// 			right : Box::new(right.negation_normal_form()),
+    //         },
+	// 		other => other,
+	// 	}
+	// }
 
     // Convert the AST back into polish notation
     pub fn to_polish_notation(&self) -> String {
         match self {
             Expr::Var(c) => c.to_string(),
             Expr::Not(expr) => format!("{}!", expr.to_polish_notation()),
-            Expr::And(left, right) => format!(
+            Expr::And{left, right} => format!(
                 "{}{}&",
                 left.to_polish_notation(),
                 right.to_polish_notation()
             ),
-            Expr::Or(left, right) => format!(
+            Expr::Or{left, right} => format!(
                 "{}{}|",
                 left.to_polish_notation(),
                 right.to_polish_notation()
@@ -76,12 +94,12 @@ pub fn parse_polish_expression(input: &str) -> Expr
             '&' => {
                 let right = stack.pop().expect("Expected a right operand for '&'"); // Pop two operands for AND
                 let left = stack.pop().expect("Expected a left operand for '&'");
-                stack.push(Expr::And(Box::new(left), Box::new(right)));
+                stack.push(Expr::And{left : Box::new(left), right : Box::new(right)});
             }
             '|' => {
                 let right = stack.pop().expect("Expected a right operand for '|'"); // Pop two operands for OR
                 let left = stack.pop().expect("Expected a left operand for '|'");
-                stack.push(Expr::Or(Box::new(left), Box::new(right)));
+                stack.push(Expr::Or{left : Box::new(left), right : Box::new(right)});
             }
             _ => panic!("Invalid character in input"), // Panic on invalid input
         }

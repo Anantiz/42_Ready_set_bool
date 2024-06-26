@@ -90,7 +90,7 @@ fn print_truth_table(line : &str)
 
 fn main()
 {
-	let line = "ABC|BD|&&";
+	let line = "ABCD&|&";
 	print_truth_table(&line);
 
 }

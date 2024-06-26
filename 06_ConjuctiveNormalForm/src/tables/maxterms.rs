@@ -54,7 +54,7 @@ fn max_iter(literals : &Vec<(bool, bool)>) -> u32
 /*
 Returns a vector of all variable configurations that result in a maxterm
 */
-pub fn get_maxterms(line : &str) => Vec<Vec<(bool, bool)>>
+pub fn get_maxterms(line : &str) -> Vec<Vec<(bool, bool)>>
 {
 	// Literals range from A to Z
 	let mut literals : Vec<(bool, bool)> = vec![(false, false); 26];
@@ -83,12 +83,11 @@ pub fn get_maxterms(line : &str) => Vec<Vec<(bool, bool)>>
 		let expression_result = rpn::rpn_evaluate(&expression);
 
 		// Get all the maxterms
-		if (!expression_result)
+		if !expression_result
 		{
-			maxterms.push(literals.iter().map(|v| v.1).collect());
+			maxterms.push(literals.clone());
 		}
 		counter += 1;
 	}
 	return maxterms;
 }
-
