@@ -1,33 +1,34 @@
-// Basically We want to distribute the negations of an expression
-// !(A & B) --> !A | !B
-
-// But in polish form
-// AB&! --> A! B! |
-
-// Best way to do it is an AST
-/*
-          !
-        /
-       &
-      /  \
-     A    B
-
-Then Distribute the tree to remove `Operator negations`
-Meaning, a negation whose child is an operator, for this
-    > Take the oposite of the operator (AND -> OR, OR -> AND)
-    > Negate the children
-        > If the childrens are operators, distribute them again recursively
-*/
+#[path ="./ast.rs"]
 mod ast;
 
-fn main() {
-    let input = "AB&!"; // Example input in polish notation
-    let tree = ast::parse_polish_expression(input);
-    println!("Original AST: {:?}", tree);
+fn main()
+{
+    let args : Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        println!("Usage: {} <input>", args[0]);
+        return;
+    }
+    let mut input : String = String::new();
+    for i in 1..args.len() {
+        input = args[i].clone();
+    }
+    if input.len() == 0 {
+        println!("Invalid input");
+        return;
+    }
 
-    let distributed_ast = tree.negation_normal_form();
-    println!("Distributed AST: {:?}", distributed_ast);
-
-    let output = distributed_ast.to_polish_notation();
-    println!("Output Polish Notation: {}", output);
+    let tree : Result<Option<Box<ast::AstNode>>, String> = ast::AstNode::rpn_to_ast(&input);
+    match tree {
+        Ok(tree) => {
+            match tree {
+                Some(tree) => {
+                    println!("Original: {:?}", tree);
+                    let negated = ast::AstNode::to_negation_normal_form(*tree);
+                    println!("Negated:  {:?}", negated.unwrap());
+                },
+                None => println!("Invalid input")
+            }
+        },
+        Err(e) => println!("Error: {}", e)
+    }
 }

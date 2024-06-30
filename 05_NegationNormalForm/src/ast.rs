@@ -1,91 +1,192 @@
-#[derive(Debug, Clone)]
-pub enum Expr {
-    Var(char),
-    Not(Box<Expr>),
-    And(Box<Expr>, Box<Expr>),
-    Or(Box<Expr>, Box<Expr>),
+use std::fmt;
+
+#[derive(Clone)]
+enum Expr
+{
+    Lit(char),
+    Not(),
+    And(),
+    Or(),
 }
 
-impl Expr {
-    // Distribute negations using De Morgan's laws
+#[derive(Clone)]
+pub struct AstNode
+{
+    data : Expr,
+    left : Option<Box<AstNode>>,
+    right : Option<Box<AstNode>>
+}
 
-	pub fn negation_normal_form(self) -> Expr {
-		match self {
-			Expr::Not(inner) => match *inner {
-				Expr::And(left, right) => Expr::Or(
-					Box::new(Expr::Not(left).negation_normal_form()),
-					Box::new(Expr::Not(right).negation_normal_form()),
-				),
-				Expr::Or(left, right) => Expr::And(
-					Box::new(Expr::Not(left).negation_normal_form()),
-					Box::new(Expr::Not(right).negation_normal_form()),
-				),
-				other => Expr::Not(Box::new(other.negation_normal_form())),
-			},
-			Expr::And(left, right) => Expr::And(
-				Box::new(left.negation_normal_form()),
-				Box::new(right.negation_normal_form()),
-			),
-			Expr::Or(left, right) => Expr::Or(
-				Box::new(left.negation_normal_form()),
-				Box::new(right.negation_normal_form()),
-			),
-			other => other,
-		}
-	}
+impl AstNode
+{
+    fn new_literal(c : char) -> Box<AstNode>
+    {
+        Box::new(AstNode
+        {
+            data : Expr::Lit(c),
+            left : None,
+            right : None
+        })
+    }
 
-    // Convert the AST back into polish notation
-    pub fn to_polish_notation(&self) -> String {
-        match self {
-            Expr::Var(c) => c.to_string(),
-            Expr::Not(expr) => format!("{}!", expr.to_polish_notation()),
-            Expr::And(left, right) => format!(
-                "{}{}&",
-                left.to_polish_notation(),
-                right.to_polish_notation()
-            ),
-            Expr::Or(left, right) => format!(
-                "{}{}|",
-                left.to_polish_notation(),
-                right.to_polish_notation()
-            ),
+    fn new_not(child : Option<Box<AstNode>>) -> Box<AstNode>
+    {
+        Box::new(AstNode
+        {
+            data : Expr::Not(),
+            left : child,
+            right : None
+        })
+    }
+
+    fn new_and(left  : Option<Box<AstNode>>, right : Option<Box<AstNode>>) -> Box<AstNode>
+    {
+        Box::new(AstNode
+        {
+            data : Expr::And(),
+            left : left,
+            right : right
+        })
+    }
+
+    fn new_or(left  : Option<Box<AstNode>>, right : Option<Box<AstNode>>) -> Box<AstNode>
+    {
+        Box::new(AstNode
+        {
+            data : Expr::Or(),
+            left : left,
+            right : right
+        })
+    }
+
+    /// Perform a match over the given Expr
+    /// Return
+    ///  Case:
+    ///     > Not: left
+    ///     > Lit: Not(left: lit, right: None)
+    ///     > Or: And(left: negate(left), right : negate(right))
+    ///     > And: Or(left: negate(left), right : negate(right))
+    /// That's actually de Morgan's Law I guess
+    fn negate(node : AstNode) -> Option<Box<AstNode>>
+    {
+        match node.data
+        {
+            Expr::Lit(c) => Some(AstNode::new_not(Some(AstNode::new_literal(c)))),
+            Expr::Not() => node.left,
+            Expr::And() => Some(AstNode::new_or(
+                AstNode::negate_box(node.left),
+                AstNode::negate_box(node.right))
+                ),
+            Expr::Or() => Some(AstNode::new_and(
+                AstNode::negate_box(node.left),
+                AstNode::negate_box(node.right))
+            )
+        }
+    }
+
+    fn negate_box(node : Option<Box<AstNode>>) -> Option<Box<AstNode>>
+    {
+        match node
+        {
+            None => None,
+            Some(node) => AstNode::negate(*node)
+        }
+    }
+
+    /*
+        ** Returns None if the input string is invalid
+    */
+    pub fn rpn_to_ast(str : &str) -> Result<Option<Box<AstNode>>,String>
+    {
+        let mut stack : Vec<Box<AstNode>> = Vec::new();
+
+        for c in str.chars()
+        {
+            match c
+            {
+                'A'..='Z' => stack.push(AstNode::new_literal(c)),
+                '!' =>  {
+                    let child = stack.pop().ok_or_else(|| "Expected target for NOT".to_string())?;
+                    stack.push(AstNode::new_not(Some(child)));
+                },
+                '&' => {
+                    let right = stack.pop().ok_or_else(|| "Expected right-hand operator for &".to_string())?;
+                    let left = stack.pop().ok_or_else(|| "Expected left-hand operator for &".to_string())?;
+                    stack.push(AstNode::new_and(Some(left), Some(right)));
+                },
+                '|' => {
+                    let right = stack.pop().ok_or_else(|| "Expected right-hand operator for |".to_string())?;
+                    let left = stack.pop().ok_or_else(|| "Expected left-hand operator for |".to_string())?;
+                    stack.push(AstNode::new_or(Some(left), Some(right)));
+                },
+                '=' => { // Implication
+                    let right = stack.pop().ok_or_else(|| "Expected right-hand operator for =".to_string())?; // Pop two operands for OR
+                    let left = stack.pop().ok_or_else(|| "Expected left-hand operator for =".to_string())?;
+                    stack.push(AstNode::new_or(
+                            Some(AstNode::new_and(Some(left.clone()), Some(right.clone()))),
+                            Some(AstNode::new_and(AstNode::negate_box(Some(left)), AstNode::negate_box(Some(right))))
+                        ))
+                },
+                '^' => { // XOR
+                    let right = stack.pop().ok_or_else(|| "Expected right-hand operator for ^".to_string())?; // Pop two operands for OR
+                    let left = stack.pop().ok_or_else(|| "Expected left-hand operator for ^".to_string())?;
+                    stack.push(AstNode::new_or(
+                            Some(AstNode::new_and(Some(left.clone()), AstNode::negate_box(Some(right.clone())))),
+                            Some(AstNode::new_and(AstNode::negate_box(Some(left)), Some(right)))
+                        ))
+                },
+                '>' => { // Material conditional, only false for [0 1 => False]
+                    let right = stack.pop().ok_or_else(|| "Expected right-hand operator for >".to_string())?; // Pop two operands for OR
+                    let left = stack.pop().ok_or_else(|| "Expected left-hand operator for >".to_string())?;
+                    stack.push(AstNode::new_or(AstNode::negate_box(Some(left)), Some(right)));
+                },
+                ' ' => continue,
+                _ => return Err(format!("Invalid character: {}", c))
+            }
+        }
+        return Ok(stack.pop());
+    }
+
+    pub fn to_rpn(&self) -> String
+    {
+        match self.data
+        {
+            Expr::Lit(c) => c.to_string(),
+            Expr::Not() => format!("{}!", self.left.as_ref().unwrap().to_rpn()),
+            Expr::And() => format!("{}{}&", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn()),
+            Expr::Or() => format!("{}{}|", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn())
+        }
+    }
+
+    /// Distribute NOT's operator such that it is only ever for literals
+    pub fn to_negation_normal_form(mut self) -> Option<Box<AstNode>>
+    {
+        match self.data
+        {
+            Expr::Lit(_) => Some(Box::new(self)),
+            Expr::Not() =>
+            {
+                if let Expr::Lit(_) = self.left.as_ref().unwrap().data
+                {
+                    return Some(Box::new(self))
+                }
+                else
+                {
+                    return AstNode::to_negation_normal_form(*(AstNode::negate_box(self.left).unwrap()))
+                }
+            },
+            _ => {
+                self.left = AstNode::to_negation_normal_form(*self.left.take().unwrap());
+                self.right = AstNode::to_negation_normal_form(*self.right.take().unwrap());
+                Some(Box::new(self))
+            }
         }
     }
 }
 
-/*
-Input example: AB&CD&|
-Exprected tree:
-     |
-   /   \
-  &     &
- / \   / \
-A   B C   D
-*/
-pub fn parse_polish_expression(input: &str) -> Expr {
-    let mut stack: Vec<Expr> = Vec::new();
 
-    for ch in input.chars() {
-        match ch {
-            'A'..='Z' => stack.push(Expr::Var(ch)), // Push variables onto the stack
-            '!' => {
-                let expr = stack.pop().expect("Expected an operand for '!'"); // Pop one operand for NOT
-                stack.push(Expr::Not(Box::new(expr)));
-            }
-            '&' => {
-                let right = stack.pop().expect("Expected a right operand for '&'"); // Pop two operands for AND
-                let left = stack.pop().expect("Expected a left operand for '&'");
-                stack.push(Expr::And(Box::new(left), Box::new(right)));
-            }
-            '|' => {
-                let right = stack.pop().expect("Expected a right operand for '|'"); // Pop two operands for OR
-                let left = stack.pop().expect("Expected a left operand for '|'");
-                stack.push(Expr::Or(Box::new(left), Box::new(right)));
-            }
-            _ => panic!("Invalid character in input"), // Panic on invalid input
-        }
+impl fmt::Debug for AstNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_rpn())
     }
-
-    // There should be exactly one element on the stack, which is the root of the AST
-    stack.pop().expect("Invalid expression, stack should contain exactly one element")
 }
