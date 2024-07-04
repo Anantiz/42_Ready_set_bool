@@ -1,65 +1,9 @@
-use std::fmt;
-
-#[derive(Clone, Copy)]
-enum Expr
-{
-    Lit(char),
-    Not(),
-    And(),
-    Or(),
-}
-
-#[derive(Clone)]
-pub struct AstNode
-{
-    data : Expr,
-    left : Option<Box<AstNode>>,
-    right : Option<Box<AstNode>>
-}
+use crate::ast::ast::AstNode;
+use crate::ast::ast::Expr;
 
 impl AstNode
 {
-    fn new_literal(c : char) -> Box<AstNode>
-    {
-        Box::new(AstNode
-        {
-            data : Expr::Lit(c),
-            left : None,
-            right : None
-        })
-    }
-
-    fn new_not(child : Option<Box<AstNode>>) -> Box<AstNode>
-    {
-        Box::new(AstNode
-        {
-            data : Expr::Not(),
-            left : child,
-            right : None
-        })
-    }
-
-    fn new_and(left  : Option<Box<AstNode>>, right : Option<Box<AstNode>>) -> Box<AstNode>
-    {
-        Box::new(AstNode
-        {
-            data : Expr::And(),
-            left : left,
-            right : right
-        })
-    }
-
-    fn new_or(left  : Option<Box<AstNode>>, right : Option<Box<AstNode>>) -> Box<AstNode>
-    {
-        Box::new(AstNode
-        {
-            data : Expr::Or(),
-            left : left,
-            right : right
-        })
-    }
-
-    /// Perform a match over the given Expr
+	/// Perform a match over the given Expr
     /// Return
     ///  Case:
     ///     > Not: left
@@ -67,7 +11,7 @@ impl AstNode
     ///     > Or: And(left: negate(left), right : negate(right))
     ///     > And: Or(left: negate(left), right : negate(right))
     /// That's actually de Morgan's Law I guess
-    fn negate(node : AstNode) -> Option<Box<AstNode>>
+    pub fn negate(node : AstNode) -> Option<Box<AstNode>>
     {
         match node.data
         {
@@ -84,7 +28,7 @@ impl AstNode
         }
     }
 
-    fn negate_box(node : Option<Box<AstNode>>) -> Option<Box<AstNode>>
+    pub fn negate_box(node : Option<Box<AstNode>>) -> Option<Box<AstNode>>
     {
         match node
         {
@@ -157,42 +101,9 @@ impl AstNode
             Expr::Or() => format!("{}{}|", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn())
         }
     }
-
-    /// Distribute NOT's operator such that it is only ever for literals
-    pub fn to_negation_normal_form(mut self) -> Option<Box<AstNode>>
-    {
-        match self.data
-        {
-            Expr::Lit(_) => Some(Box::new(self)),
-            Expr::Not() =>
-            {
-                if let Expr::Lit(_) = self.left.as_ref().unwrap().data
-                {
-                    return Some(Box::new(self))
-                }
-                else
-                {
-                    return AstNode::to_negation_normal_form(*(AstNode::negate_box(self.left).unwrap()))
-                }
-            },
-            _ => {
-                self.left = AstNode::to_negation_normal_form(*self.left.take().unwrap());
-                self.right = AstNode::to_negation_normal_form(*self.right.take().unwrap());
-                Some(Box::new(self))
-            }
-        }
-    }
-
-    pub fn to_cnf(mut self) -> Option<Box<AstNode>>
-    {
-        match self.data
-        {
-            Expr::Lit(_) => Some(Box::new(self)),
-            
-        }
-    }
 }
 
+use std::fmt;
 
 impl fmt::Debug for AstNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

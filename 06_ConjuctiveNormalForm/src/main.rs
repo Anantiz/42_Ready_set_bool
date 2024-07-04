@@ -1,4 +1,3 @@
-#[path ="./ast.rs"]
 mod ast;
 
 fn main()
