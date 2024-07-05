@@ -96,9 +96,9 @@ impl AstNode
         match self.data
         {
             Expr::Lit(c) => c.to_string(),
-            Expr::Not() => format!("{}!", self.left.as_ref().unwrap().to_rpn()),
-            Expr::And() => format!("{}{}&", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn()),
-            Expr::Or() => format!("{}{}|", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn())
+            Expr::Not() => format!("{} !", self.left.as_ref().unwrap().to_rpn()),
+            Expr::And() => format!("{} {} &", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn()),
+            Expr::Or() => format!("{} {} |", self.left.as_ref().unwrap().to_rpn(), self.right.as_ref().unwrap().to_rpn())
         }
     }
 }

@@ -12,5 +12,6 @@ pub struct AstNode
 {
     pub data : Expr,
     pub left : Option<Box<AstNode>>,
-    pub right : Option<Box<AstNode>>
+    pub right : Option<Box<AstNode>>,
+    pub name : String
 }

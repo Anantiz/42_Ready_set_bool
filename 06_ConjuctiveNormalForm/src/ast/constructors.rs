@@ -9,7 +9,8 @@ impl AstNode
         {
             data : Expr::Lit(c),
             left : None,
-            right : None
+            right : None,
+            name : String::new()
         })
     }
 
@@ -19,7 +20,8 @@ impl AstNode
         {
             data : Expr::Not(),
             left : child,
-            right : None
+            right : None,
+            name : String::new()
         })
     }
 
@@ -29,7 +31,8 @@ impl AstNode
         {
             data : Expr::And(),
             left : left,
-            right : right
+            right : right,
+            name : String::new()
         })
     }
 
@@ -39,7 +42,8 @@ impl AstNode
         {
             data : Expr::Or(),
             left : left,
-            right : right
+            right : right,
+            name : String::new()
         })
     }
 }
