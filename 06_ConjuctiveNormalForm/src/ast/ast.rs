@@ -1,6 +1,8 @@
+use std::rc::Rc;
+use std::cell::RefCell;
+
 #[derive(Clone, Copy)]
-pub enum Expr
-{
+pub enum Expr {
     Lit(char),
     Not(),
     And(),
@@ -8,10 +10,9 @@ pub enum Expr
 }
 
 #[derive(Clone)]
-pub struct AstNode
-{
-    pub data : Expr,
-    pub left : Option<Box<AstNode>>,
-    pub right : Option<Box<AstNode>>,
-    pub name : String
+pub struct AstNode {
+    pub data: Expr,
+    pub left: Option<Rc<RefCell<AstNode>>>,
+    pub right: Option<Rc<RefCell<AstNode>>>,
+    pub name: String,
 }

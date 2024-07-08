@@ -3,25 +3,23 @@ use crate::ast::ast::Expr;
 
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 lazy_static! {
     static ref GLOB_NAME: Mutex<String> = Mutex::new(String::new());
 }
 
-fn get_char(str : &str) -> char
-{
+fn get_char(str: &str) -> char {
     let c = str.chars().nth(0);
-    match c
-    {
+    match c {
         Some(c) => c,
-        None => '0'
+        None => '0',
     }
 }
 
-impl AstNode
-{
-    pub fn name_inner_nodes(&mut self) -> &mut Self
-    {
+impl AstNode {
+    pub fn name_inner_nodes(&mut self) -> &mut Self {
         /// A -> B ... -> AA -> AZ ... -> BA ...
         fn increment_name(name: &mut String) {
             let mut chars: Vec<char> = name.chars().collect();
@@ -44,180 +42,201 @@ impl AstNode
             name.extend(chars);
         }
 
-        fn iter_tree(node: &mut AstNode) {
-            if node.left.is_some() // right cannot be if left is not
-            {
-                let mut data = GLOB_NAME.lock().unwrap();
-                node.name = String::from(&*data);
-                increment_name(&mut *data);
-                if let Some(ref mut left) = node.left {
-                    iter_tree(left);
-                }
-                if let Some(ref mut right) = node.right {
-                    iter_tree(right);
-                }
+        fn iter_tree(node: &mut Rc<RefCell<AstNode>>)
+        {
+            // Drops the first borrow or returns early
+            if node.borrow().left.is_none() && node.borrow().right.is_none() {
+                return
+            }
+            let node_cell = node.clone();
+            let mut data = GLOB_NAME.lock().unwrap();
+            node_cell.borrow_mut().name = data.clone();
+            increment_name(&mut data);
+            drop(data);
+            if let Some(mut left) = node_cell.clone().borrow().left.clone() {
+                iter_tree(&mut left);
+            }
+            if let Some(mut right) = node_cell.clone().borrow().right.clone() {
+                iter_tree(&mut right);
             }
         }
 
         let mut data = GLOB_NAME.lock().unwrap();
         *data = String::from("A");
         drop(data);
-        iter_tree(self);
+        iter_tree(&mut Rc::new(RefCell::new(self.clone())));
         self
     }
 
-    /// A Conversion using the Tseytin Transformation
-    /// Note to future self: What is the Tseytin Transformation?
-    /// 	It's a method to keep a compact representation of a formula
-    /// 	In CNF form, a CNF formula that keeps logical equivalence will
-    /// 	scale exponentially with the number of variables.
-    /// 	However, for CNF to work we do not need to keep the logical equivalence
-    /// 	it just has to be equisatisfiable (Meaning that if one has a solution the other has too)
-    pub fn to_cnf(mut self) -> Option<Box<AstNode>>
+    pub fn to_cnf(mut self) -> Option<Rc<RefCell<AstNode>>>
     {
-        /* Steps:
+        self.name_inner_nodes();
+        let root = AstNode::new_and(None, None);
+        let tail_opt = AstNode::to_cnf_tseytin(AstNode::to_negation_normal_form(self), Some(root.clone()));
 
-        1. Convert to Negation Normal Form
-            (So you only have Literals, Conjonctions and Disjunctions,
-            it removes all other fancy operators)
-        2. Create new intermediary variables for each internal node (non-leaves)
-        3. For each of these variables, append each of their clauses to the tree as a new conjunction
-            (Haha so easy)
-        */
-        self.name_inner_nodes(); // I want to tell this is safe code, not unsafe, how to enforce the compiler to accept this
-        let cnf_new_tree = Some(AstNode::new_and(None, None)); // Holder
-        AstNode::to_cnf_tseytin(AstNode::to_negation_normal_form(self), &cnf_new_tree);
-        return (cnf_new_tree.unwrap()).left
+        if tail_opt.is_none() {
+            println!("\x1b[31mTail option is none\x1b[0m");
+            return None;
+        }
+        // Swap the value of tail with tail.left as our recursive function
+        // will always end with an And with no right child
+        let tail = tail_opt.unwrap();
+        tail.swap(&root.borrow_mut().left.take().as_mut().unwrap());
+
+        println!("CNF DONE");
+        if root.borrow().left.is_none() || root.borrow().right.is_none() {
+            println!("\x1b[31mRoot has a None child\x1b[0m");
+            None
+        } else {
+            Some(root)
+        }
     }
 
-    fn to_cnf_tseytin(nnf_node_option : Option<Box<AstNode>>, cnf_new_tree : &Option<Box<AstNode>>)
+    fn to_cnf_tseytin(nnf_node_option: Option<Rc<RefCell<AstNode>>>, cnf_tail: Option<Rc<RefCell<AstNode>>>
+    ) -> Option<Rc<RefCell<AstNode>>>
     {
-        fn cnf_subtree(mut cnf_tail : &Option<Box<AstNode>>) -> Option<Box<AstNode>>
+        println!("CNF once more");
+        let new_cnf_tail: Option<Rc<RefCell<AstNode>>> = cnf_subtree(&nnf_node_option, cnf_tail.clone());
+        if new_cnf_tail.is_none() {
+            println!("CNF FAILED");
+            return cnf_tail;
+        }
+        let nnf_node = nnf_node_option.unwrap();
+        let nnf_node = nnf_node.borrow();
+        return match nnf_node.data
         {
-            /*
-            NEGATIONS
-                Expression:
-                    ¬(a)
-                    |
-                    x(b)
-                CNF:
-                    (¬a ∨ ¬b) ∧ (b ∨ a).
-            */
-            fn tseytin_not(nnf_node : &Box<AstNode>) -> Box<AstNode>
+            Expr::Lit(_) => {
+                println!("CNF LIT");
+                new_cnf_tail
+            },
+            Expr::Not() => AstNode::to_cnf_tseytin(nnf_node.left.clone(), new_cnf_tail),
+            Expr::And() | Expr::Or() => {
+                let new_cnf_tail = AstNode::to_cnf_tseytin(nnf_node.left.clone(), new_cnf_tail);
+                AstNode::to_cnf_tseytin(nnf_node.right.clone(), new_cnf_tail)
+            },
+        };
+        fn cnf_subtree(nnf_node_option: &Option<Rc<RefCell<AstNode>>>, cnf_tail: Option<Rc<RefCell<AstNode>>>,
+        ) -> Option<Rc<RefCell<AstNode>>>
+        {
+            return match nnf_node_option {
+                None => None,
+                Some(nnf_node) => match nnf_node.borrow().data {
+                    Expr::Not() => merge_trees(cnf_tail.unwrap(), tseytin_not(nnf_node)),
+                    Expr::And() => merge_trees(cnf_tail.unwrap(), tseytin_and(nnf_node)),
+                    Expr::Or() => merge_trees(cnf_tail.unwrap(), tseytin_or(nnf_node)),
+                    Expr::Lit(_) => cnf_tail,
+                },
+            };
+
+            fn tseytin_not(nnf_node: &Rc<RefCell<AstNode>>
+            ) -> Rc<RefCell<AstNode>>
             {
-                AstNode::new_and(
+               AstNode::new_and(
                     Some(AstNode::new_or(
-                        Some(AstNode::new_literal(get_char(&nnf_node.name))),
-                        Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name)))
+                        Some(AstNode::new_literal(get_char(&nnf_node.borrow().name))),
+                        Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                        ))),
                     )),
                     Some(AstNode::new_or(
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.name))))),
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name)))))
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().name,
+                        ))))),
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                        ))))),
                     )),
                 )
             }
 
-            /*
-            CONJUCTIONS
-                Expression:
-                    ∧(a)
-                / \
-                x(b)  y(c)
-
-                CNF:
-                    (¬a ∨ b) ∧ (¬a ∨ c) ∧ (¬b ∨ ¬c ∨ a)
-            */
-            fn tseytin_and(nnf_node : &Box<AstNode>) -> Box<AstNode>
+            fn tseytin_and(nnf_node: &Rc<RefCell<AstNode>>
+            ) -> Rc<RefCell<AstNode>>
             {
                 AstNode::new_and(
                     Some(AstNode::new_or(
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.name))))),
-                        Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name)))
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().name,
+                        ))))),
+                        Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                        ))),
                     )),
                     Some(AstNode::new_and(
                         Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.name))))),
-                            Some(AstNode::new_literal(get_char(&nnf_node.right.as_ref().unwrap().name)))
+                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().name,
+                            ))))),
+                            Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                            ))),
                         )),
                         Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name))))),
+                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                            ))))),
                             Some(AstNode::new_or(
-                                Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.right.as_ref().unwrap().name))))),
-                                Some(AstNode::new_literal(get_char(&nnf_node.name)))
-                            ))
-                        ))
-                    ))
+                                Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                    &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                                ))))),
+                                Some(AstNode::new_literal(get_char(
+                                    &nnf_node.borrow().name,
+                                ))),
+                            )),
+                        )),
+                    )),
                 )
             }
 
-            /*
-            DISJUNCTION:
-                Expression:
-                    ∨(a)
-                / \
-                x(b)  y(c)
-
-                CNF:
-                    (¬a ∨ b ∨ c) ∧ (¬b ∨ a) ∧ (¬c ∨ a)
-            */
-            fn tseytin_or(nnf_node : &Box<AstNode>) -> Box<AstNode>
+            fn tseytin_or(nnf_node: &Rc<RefCell<AstNode>>
+            ) -> Rc<RefCell<AstNode>>
             {
                 AstNode::new_and(
                     Some(AstNode::new_or(
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.name))))),
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                            &nnf_node.borrow().name,
+                        ))))),
                         Some(AstNode::new_or(
-                            Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name))),
-                            Some(AstNode::new_literal(get_char(&nnf_node.right.as_ref().unwrap().name)))
-                        ))
+                            Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                            ))),
+                            Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                            ))),
+                        )),
                     )),
                     Some(AstNode::new_and(
                         Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.left.as_ref().unwrap().name))))),
-                            Some(AstNode::new_literal(get_char(&nnf_node.name)))
+                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                            ))))),
+                            Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().name,
+                            ))),
                         )),
                         Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.right.as_ref().unwrap().name))))),
-                            Some(AstNode::new_literal(get_char(&nnf_node.name)))
-                        ))
-                    ))
+                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                            ))))),
+                            Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().name,
+                            ))),
+                        )),
+                    )),
                 )
             }
 
-            fn add_and_node_with_subtree_to_right_of_an_and_node(tail : &Option<Box<AstNode>>, subtree : Box<AstNode>) -> Option<Box<AstNode>>
+            fn merge_trees(parent_tree_tail: Rc<RefCell<AstNode>>, subtree: Rc<RefCell<AstNode>>,
+            ) -> Option<Rc<RefCell<AstNode>>>
             {
-                match tail
-                {
-                    None => Some(subtree),
-                    Some(tail) => {
-                        tail.right = Some(subtree);
-                        Some(tail)
-                    }
+                if parent_tree_tail.borrow().left.is_none() {
+                    parent_tree_tail.borrow_mut().left = Some(subtree);
+                    return Some(parent_tree_tail);
+                }
+                else {
+                    parent_tree_tail.borrow_mut().right = Some(AstNode::new_and(None, None));
+                    merge_trees(parent_tree_tail.borrow_mut().right.clone().unwrap(), subtree)
                 }
             }
-            /*
-                For each node, get it's associated CNF subtree
-                and add it to the CNF tree
-            */
-
-            match nnf_node_option
-            {
-                None => None,
-                Some(nnf_node) => match nnf_node.as_ref().data
-                {
-                    Expr::Not() => add_and_node_with_subtree_to_right_of_an_and_node(tail, tseytin_not(&nnf_node)),
-                    Expr::And() => add_and_node_with_subtree_to_right_of_an_and_node(tail, tseytin_and(&nnf_node)),
-                    Expr::Or() => add_and_node_with_subtree_to_right_of_an_and_node(tail, tseytin_or(&nnf_node)),
-                    Expr::Lit(_) => None,
-                },
-            }
-        }
-
-        let tail : Option<Box<AstNode>> = cnf_subtree(cnf_new_tree);
-        if nnf_node_option.is_some()
-        {
-            AstNode::to_cnf_tseytin(nnf_node_option.unwrap().left, &tail);
-            AstNode::to_cnf_tseytin(nnf_node_option.unwrap().right,&tail);
         }
     }
 }
-
