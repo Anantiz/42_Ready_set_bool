@@ -40,6 +40,7 @@ fn main()
                     let negated = negated.unwrap();
                     let negated = negated.borrow();
                     let cnf = ast::AstNode::to_cnf((*negated).clone());
+                    println!("Printing CNF");
                     println!("Conjuctive Normal form:  {:?}", *cnf.unwrap().borrow());
                 },
                 None => println!("Invalid input")

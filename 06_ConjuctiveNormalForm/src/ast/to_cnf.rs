@@ -11,10 +11,11 @@ lazy_static! {
 }
 
 fn get_char(str: &str) -> char {
+    println!("Getting char from '{}'", str);
     let c = str.chars().nth(0);
     match c {
         Some(c) => c,
-        None => '0',
+        None => '?',
     }
 }
 
@@ -24,6 +25,7 @@ impl AstNode {
         fn increment_name(name: &mut String) {
             let mut chars: Vec<char> = name.chars().collect();
             let mut carry = true;
+            println!("Incrementing name '{}'", name);
 
             for i in (0..chars.len()).rev() {
                 if carry {
@@ -50,8 +52,8 @@ impl AstNode {
             }
             let node_cell = node.clone();
             let mut data = GLOB_NAME.lock().unwrap();
-            node_cell.borrow_mut().name = data.clone();
-            increment_name(&mut data);
+            node_cell.borrow_mut().name = String::from((*data).as_str());
+            increment_name(&mut *data);
             drop(data);
             if let Some(mut left) = node_cell.clone().borrow().left.clone() {
                 iter_tree(&mut left);
@@ -75,18 +77,33 @@ impl AstNode {
         let tail_opt = AstNode::to_cnf_tseytin(AstNode::to_negation_normal_form(self), Some(root.clone()));
 
         if tail_opt.is_none() {
-            println!("\x1b[31mTail option is none\x1b[0m");
+            println!("\x1b[31mError Tail option is none\x1b[0m");
             return None;
         }
-        // Swap the value of tail with tail.left as our recursive function
+        // Swap the value of tail with the value of tail.left as our recursive function
         // will always end with an And with no right child
-        let tail = tail_opt.unwrap();
-        tail.swap(&root.borrow_mut().left.take().as_mut().unwrap());
+        // In other words, any Node that points to taill shall point to tail.left
+        let tail : Rc<RefCell<AstNode>> = tail_opt.unwrap();
+        if !Rc::ptr_eq(&root, &tail)
+        {
+            let tail_cell = (*tail).clone();
+            let tail_left = tail.borrow().left.clone().unwrap();
+            tail_cell.swap(&tail_left);
+        }
+        else
+        {
+            println!("\x1b[31mError Tail is the root\x1b[0m");
+        }
 
         println!("CNF DONE");
-        if root.borrow().left.is_none() || root.borrow().right.is_none() {
-            println!("\x1b[31mRoot has a None child\x1b[0m");
-            None
+        if root.borrow().right.is_none() {
+            if root.borrow().left.is_some() {
+                return root.borrow().left.clone();
+            }
+            else {
+                println!("\x1b[31mError Root has a No child\x1b[0m");
+                None
+            }
         } else {
             Some(root)
         }
@@ -95,7 +112,6 @@ impl AstNode {
     fn to_cnf_tseytin(nnf_node_option: Option<Rc<RefCell<AstNode>>>, cnf_tail: Option<Rc<RefCell<AstNode>>>
     ) -> Option<Rc<RefCell<AstNode>>>
     {
-        println!("CNF once more");
         let new_cnf_tail: Option<Rc<RefCell<AstNode>>> = cnf_subtree(&nnf_node_option, cnf_tail.clone());
         if new_cnf_tail.is_none() {
             println!("CNF FAILED");
@@ -105,10 +121,7 @@ impl AstNode {
         let nnf_node = nnf_node.borrow();
         return match nnf_node.data
         {
-            Expr::Lit(_) => {
-                println!("CNF LIT");
-                new_cnf_tail
-            },
+            Expr::Lit(_) => new_cnf_tail,
             Expr::Not() => AstNode::to_cnf_tseytin(nnf_node.left.clone(), new_cnf_tail),
             Expr::And() | Expr::Or() => {
                 let new_cnf_tail = AstNode::to_cnf_tseytin(nnf_node.left.clone(), new_cnf_tail);
@@ -131,20 +144,16 @@ impl AstNode {
             fn tseytin_not(nnf_node: &Rc<RefCell<AstNode>>
             ) -> Rc<RefCell<AstNode>>
             {
+                println!("Tseytin Not");
                AstNode::new_and(
                     Some(AstNode::new_or(
                         Some(AstNode::new_literal(get_char(&nnf_node.borrow().name))),
-                        Some(AstNode::new_literal(get_char(
-                            &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                        Some(AstNode::new_literal(get_char(&nnf_node.borrow().left.as_ref().unwrap().borrow().name,
                         ))),
                     )),
                     Some(AstNode::new_or(
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
-                            &nnf_node.borrow().name,
-                        ))))),
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
-                            &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
-                        ))))),
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.borrow().name,))))),
+                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(&nnf_node.borrow().left.as_ref().unwrap().borrow().name,))))),
                     )),
                 )
             }
@@ -152,6 +161,7 @@ impl AstNode {
             fn tseytin_and(nnf_node: &Rc<RefCell<AstNode>>
             ) -> Rc<RefCell<AstNode>>
             {
+                println!("Tseytin And");
                 AstNode::new_and(
                     Some(AstNode::new_or(
                         Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
@@ -190,6 +200,7 @@ impl AstNode {
             fn tseytin_or(nnf_node: &Rc<RefCell<AstNode>>
             ) -> Rc<RefCell<AstNode>>
             {
+                println!("Tseytin Or");
                 AstNode::new_and(
                     Some(AstNode::new_or(
                         Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
