@@ -1,32 +1,38 @@
+use crate::ast::node::*;
+
 use std::rc::Rc;
 use std::cell::RefCell;
 
+
 impl Node {
-	fn new_and(left: Option<Rc<RefCell<Node>>>, right: Option<Rc<RefCell<Node>>>, parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
-		let mut node = Node::new(name, Operator::And);
+	pub fn new_and(left: Option<Rc<RefCell<Node>>>, right: Option<Rc<RefCell<Node>>>,
+		parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
+		let mut node = Node::new(name, Op::And);
 		node.left = left;
 		node.right = right;
 		node.parent = parent;
 		node
 	}
 
-	fn new_or(left: Option<Rc<RefCell<Node>>>, right: Option<Rc<RefCell<Node>>>, parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
-		let mut node = Node::new(name, Operator::Or);
+	pub fn new_or(left: Option<Rc<RefCell<Node>>>, right: Option<Rc<RefCell<Node>>>,
+		parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
+		let mut node = Node::new(name, Op::Or);
 		node.left = left;
 		node.right = right;
 		node.parent = parent;
 		node
 	}
 
-	fn new_not(left: Option<Rc<RefCell<Node>>>, parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
-		let mut node = Node::new(name, Operator::Not);
+	pub fn new_not(left: Option<Rc<RefCell<Node>>>, parent: Option<Rc<RefCell<Node>>>,
+		name: String) -> Self {
+		let mut node = Node::new(name, Op::Not);
 		node.left = left;
 		node.parent = parent;
 		node
 	}
 
-	fn new_lit(parent: Option<Rc<RefCell<Node>>>, name: String) -> Self {
-		Node::new(name, Operator::Lit(name));
+	pub fn new_lit(parent: Option<Rc<RefCell<Node>>>, name: String, value : String) -> Self {
+		let mut node = Node::new(name, Op::Lit(value));
 		node.parent = parent;
 		node
 	}
