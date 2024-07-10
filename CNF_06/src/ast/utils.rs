@@ -87,6 +87,8 @@ impl Node {
 	/// 5. Returns the new tail of the tree
 	pub fn merge_as_conjuction(tail : &mut Rc<RefCell<Node>>, other: Node) -> Rc<RefCell<Node>>
 	{
+		println!("Merging as conjuction {} and {}", tail.borrow().name, other.name);
+
 		let left = tail.clone();
 		let tail_parent = left.borrow().parent.clone();
 		let bridge = Node::new_and(Some(left), Some(other.to_rc()), increment_name());

@@ -4,9 +4,9 @@ impl Node
 {
 	pub fn to_rpn(&self) -> String {
 		match & self.operator {
-			Op::And => format!("{} {} &", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
-			Op::Or => format!("{} {} |", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
-			Op::Not => format!("{} !", self.left.clone().unwrap().borrow().to_rpn()),
+			Op::And => format!("{} {} &[{}]", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn(), self.name.clone()),
+			Op::Or => format!("{} {} |[{}]", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn(),self.name.clone()),
+			Op::Not => format!("{} ![{}]", self.left.clone().unwrap().borrow().to_rpn(), self.name.clone()),
 			Op::Lit(val) => format!("{}", val.clone()),
 		}
 	}

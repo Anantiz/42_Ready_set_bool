@@ -120,7 +120,6 @@ impl Node
                 name.push_str(&COUNT.to_string());
                 COUNT += 1;
             }
-            println!("Creating : {}", name);
             name
         }
     }

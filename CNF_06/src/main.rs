@@ -16,9 +16,10 @@ fn main() {
         println!("Error: {}", e);
         return;
     }
+    println!("Input:    {}", input);
     let tree : Option<Rc<RefCell<Node>>> = tree.unwrap();
     if let Some(tree) = tree.clone() {
-        println!("Parser Output: {}", tree.borrow().to_rpn());
+        println!("Parsed:   {}", tree.borrow().to_rpn());
     } else {
         println!("Empty tree");
     }
@@ -26,7 +27,7 @@ fn main() {
 
     let cnf = tree.borrow().to_cnf();
     if let Some(cnf) = cnf {
-        println!("CNF: {}", cnf.borrow().to_rpn());
+        println!("\nCNF form: {}", cnf.borrow().to_rpn());
     } else {
         println!("Empty CNF");
     }

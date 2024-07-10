@@ -166,12 +166,9 @@ impl AstNode
             Expr::Lit(_) => Some(Box::new(self)),
             Expr::Not() =>
             {
-                if let Expr::Lit(_) = self.left.as_ref().unwrap().data
-                {
+                if let Expr::Lit(_) = self.left.as_ref().unwrap().data {
                     return Some(Box::new(self))
-                }
-                else
-                {
+                }else {
                     return AstNode::to_negation_normal_form(*(AstNode::negate_box(self.left).unwrap()))
                 }
             },

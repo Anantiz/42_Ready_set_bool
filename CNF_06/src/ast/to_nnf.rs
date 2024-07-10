@@ -6,43 +6,56 @@ use std::cell::RefCell;
 
 impl Node {
 
-	/// Will create a new tree in CNF form
+	pub fn negate(&mut self) -> Rc<RefCell<Node>>
+	{
+		match self.operator {
+			Op::Not => self.left.clone().unwrap(),
+			Op::Lit(_) => Node::new_not(Some(self.duplicate().to_rc()), self.name.clone()).to_rc(),
+			Op::And => Node::new_or(
+				Some(self.left.clone().unwrap().borrow_mut().negate()),
+				Some(self.right.clone().unwrap().borrow_mut().negate()),
+				self.name.clone()).to_rc(),
+			Op::Or => Node::new_and(
+				Some(self.left.clone().unwrap().borrow_mut().negate()),
+				Some(self.right.clone().unwrap().borrow_mut().negate()),
+				self.name.clone()).to_rc(),
+		}
+	}
+
+	/// Will create a new tree in NNF form
 	pub fn to_nnf(& self) -> Option<Rc<RefCell<Node>>>
 	{
 		fn inner(og_node : Rc<RefCell<Node>>)-> Option<Rc<RefCell<Node>>>
 		{
-			let node = og_node.borrow();
+			let mut node = og_node.borrow_mut();
 			match node.operator {
-				Op::And => {
-					let left = inner(node.left.clone().unwrap());
-					let right = inner(node.right.clone().unwrap());
-					match (left, right) {
-						(Some(left), Some(right)) => Some(Node::new_and(Some(left), Some(right), node.name.clone()).to_rc()),
-						_ => None,
-					}
+				Op::Lit(_) => {
+					drop(node);
+					Some(og_node)
 				},
-				Op::Or => {
+				Op::Or | Op::And => {
 					let left = inner(node.left.clone().unwrap());
 					let right = inner(node.right.clone().unwrap());
-					match (left, right) {
-						(Some(left), Some(right)) => Some(Node::new_or(Some(left), Some(right), node.name.clone()).to_rc()),
-						_ => None,
-					}
+					node.left = left;
+					node.right = right;
+					drop(node);
+					Some(og_node)
 				},
 				Op::Not => {
-					let left = inner(node.left.clone().unwrap());
-					match left {
-						Some(left) => Some(Node::new_not(Some(left), node.name.clone()).to_rc()),
-						_ => None,
+					let mut child = node.left.clone().unwrap().borrow_mut().clone();
+					match child.operator {
+						Op::Lit(_) => {
+							drop(node);
+							Some(og_node)
+						}
+						_ => {
+							drop(node);
+							Some(child.negate())
+						}
 					}
 				},
-				Op::Lit(_) => {
-					drop(node); // Drop the borrow
-					Some(og_node)
-				}
 			}
 		}
-		println!("NNF Done");
 		// SAFETY: We duplicate the tree to avoid modifying the original tree
 		inner(self.duplicate().to_rc())
 	}

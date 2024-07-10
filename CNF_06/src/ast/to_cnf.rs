@@ -15,7 +15,7 @@ impl Node {
 		if nnf.is_none() {
 			return None;
 		}
-		println!("NNF: {}", nnf.clone().unwrap().borrow().to_rpn());
+		println!("NNF form: {}", nnf.clone().unwrap().borrow().to_rpn());
 
 		let mut cnf_root : Option<Rc<RefCell<Node>>> = None;
 		let mut tail : Option<Rc<RefCell<Node>>> = None;
@@ -24,10 +24,8 @@ impl Node {
 		loop {
 			let it = iterator.next_node();
 			if it.is_none() {
+				println!("End of cnf reached");
 				break;
-			}
-			else {
-				println!("CNF Iterating over {}", it.clone().unwrap().borrow().name);
 			}
 			let node = it.unwrap().borrow().clone();
 			let tseytin_node = match & node.operator {
@@ -51,11 +49,11 @@ impl Node {
 				tail = Some(Node::merge_as_conjuction(&mut tail.unwrap(), tseytin_node));
 			}
 		}
-		println!("CNF Done");
 		cnf_root
 	}
 
 	fn tseytin_transform_not(& self) -> Node {
+		println!("Transforming NOT node: {}", self.name);
 		/*
 		*	When the node is a Negation:
 		*		As (NOT [left]-> ?) where
@@ -83,6 +81,7 @@ impl Node {
 
 	/// Create a new tree without affecting the original tree
 	fn tseytin_transform_and(& self) -> Node {
+		println!("Transforming AND node: {}", self.name);
 		/*
 		*	When the node is a Conjuction:
 		*		As (? ∧ ?) where
@@ -120,6 +119,7 @@ impl Node {
 	}
 
 	fn tseytin_transform_or(& self) -> Node {
+		println!("Transforming OR node: {}", self.name);
 		/*
 		*	When the node is a Disjunction:
 		*		As (? ∨ ?) where
