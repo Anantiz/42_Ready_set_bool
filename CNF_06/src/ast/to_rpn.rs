@@ -2,12 +2,12 @@ use crate::ast::node::*;
 
 impl Node
 {
-	fn to_rpn(&self) -> String {
+	pub fn to_rpn(&self) -> String {
 		match & self.operator {
-			Op::And => format!("{}{}&", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
-			Op::Or => format!("{}{}|", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
-			Op::Not => format!("{}!", self.left.clone().unwrap().borrow().to_rpn()),
-			Op::Lit(val) => format!("{} ", val.clone()),
+			Op::And => format!("{} {} &", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
+			Op::Or => format!("{} {} |", self.left.clone().unwrap().borrow().to_rpn(), self.right.clone().unwrap().borrow().to_rpn()),
+			Op::Not => format!("{} !", self.left.clone().unwrap().borrow().to_rpn()),
+			Op::Lit(val) => format!("{}", val.clone()),
 		}
 	}
 }

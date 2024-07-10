@@ -31,12 +31,16 @@ impl Node {
 	}
 
 	pub fn new_lit(name: String) -> Self {
-		let mut node = Node::new(name, Op::Lit(name.clone()));
+		let mut node = Node::new(name.clone(), Op::Lit(name));
 		node.parent = None;
 		node
 	}
 
 	pub fn to_rc(self) -> Rc<RefCell<Node>> {
 		Rc::new(RefCell::new(self))
+	}
+
+	pub fn as_rc(& self) -> Rc<RefCell<Node>> {
+		Rc::new(RefCell::new(self.clone()))
 	}
 }

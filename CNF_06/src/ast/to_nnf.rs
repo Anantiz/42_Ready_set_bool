@@ -42,6 +42,7 @@ impl Node {
 				}
 			}
 		}
+		println!("NNF Done");
 		// SAFETY: We duplicate the tree to avoid modifying the original tree
 		inner(self.duplicate().to_rc())
 	}

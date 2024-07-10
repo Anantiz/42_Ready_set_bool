@@ -3,6 +3,7 @@ pub mod constructors;
 
 pub mod parser;
 pub mod utils;
+pub mod iterator;
 
 pub mod to_rpn;
 pub mod to_nnf;

@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
+#[derive(Clone)]
 pub enum Op {
 	And,
 	Or,
@@ -8,6 +9,7 @@ pub enum Op {
 	Lit(String),
 }
 
+#[derive(Clone)]
 pub struct Node {
 	pub name: String,
 	pub operator: Op,

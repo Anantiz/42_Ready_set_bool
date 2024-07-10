@@ -23,25 +23,23 @@ impl Node
                 'A'..='Z' => stack.push(Node::new_lit(c.to_string()).to_rc()),
                 '!' => {
                     let child = stack.pop().ok_or_else(|| "Expected target for NOT".to_string())?;
-                    let node = Node::new_not(Some(child.clone()), increment_name()).to_rc();
-                    child.borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                    let node = Node::new_not(Some(child.clone()), increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 '&' => {
                     let right = stack.pop().ok_or_else(|| "Expected right-hand operator for &".to_string())?;
                     let left = stack.pop().ok_or_else(|| "Expected left-hand operator for &".to_string())?;
-                    let node = Node::new_and(Some(right.clone()), Some(left.clone()), increment_name()).to_rc();
-                    right.borrow_mut().parent = Some(node.clone());
-                    left.borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                    let node = Node::new_and(Some(left.clone()), Some(right.clone()), increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 '|' => {
                     let right = stack.pop().ok_or_else(|| "Expected right-hand operator for |".to_string())?;
                     let left = stack.pop().ok_or_else(|| "Expected left-hand operator for |".to_string())?;
-                    let node = Node::new_or(Some(right.clone()), Some(left.clone()), increment_name()).to_rc();
-                    right.borrow_mut().parent = Some(node.clone());
-                    left.borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                    let node = Node::new_or(Some(left.clone()), Some(right.clone()), increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 '=' => {
                     let right_a = stack.pop().ok_or_else(|| "Expected right-hand operator for =".to_string())?;
@@ -53,22 +51,22 @@ impl Node
                     let node_and_left = Node::new_and(
                         Some(left_a),
                         Some(right_a),
-                        increment_name()).to_rc();
+                        increment_name());
 
                     let node_and_right = Node::new_and(
                         Some(Node::negate_subtree(&left_b.borrow())),
                         Some(Node::negate_subtree(&right_b.borrow())),
-                        increment_name()).to_rc();
+                        increment_name());
 
-                    node_and_left.borrow().right.clone().unwrap().borrow_mut().parent = Some(node_and_left.clone());
-                    node_and_left.borrow().left.clone().unwrap().borrow_mut().parent = Some(node_and_left.clone());
-                    node_and_right.borrow().right.clone().unwrap().borrow_mut().parent = Some(node_and_right.clone());
-                    node_and_right.borrow().left.clone().unwrap().borrow_mut().parent = Some(node_and_right.clone());
+                    Node::assign_parents_to_children(&node_and_left);
+                    Node::assign_parents_to_children(&node_and_right);
 
-                    let node = Node::new_or(Some(node_and_left.clone()), Some(node_and_right.clone()), increment_name()).to_rc();
-                    node_and_left.borrow_mut().parent = Some(node.clone());
-                    node_and_right.borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                    let node = Node::new_or(
+                        Some(node_and_left.as_rc()),
+                        Some(node_and_right.as_rc()),
+                        increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 '^' => {
                     let right_a = stack.pop().ok_or_else(|| "Expected right-hand operator for ^".to_string())?;
@@ -80,22 +78,22 @@ impl Node
                     let node_and_left = Node::new_and(
                         Some(left_a),
                         Some(Node::negate_subtree(&right_a.borrow())),
-                        increment_name()).to_rc();
+                        increment_name());
 
                     let node_and_right = Node::new_and(
                         Some(Node::negate_subtree(&left_b.borrow())),
                         Some(right_b),
-                        increment_name()).to_rc();
+                        increment_name());
 
-                    node_and_left.borrow().right.clone().unwrap().borrow_mut().parent = Some(node_and_left.clone());
-                    node_and_left.borrow().left.clone().unwrap().borrow_mut().parent = Some(node_and_left.clone());
-                    node_and_right.borrow().right.clone().unwrap().borrow_mut().parent = Some(node_and_right.clone());
-                    node_and_right.borrow().left.clone().unwrap().borrow_mut().parent = Some(node_and_right.clone());
+                    Node::assign_parents_to_children(&node_and_left);
+                    Node::assign_parents_to_children(&node_and_right);
 
-                    let node = Node::new_or(Some(node_and_left.clone()), Some(node_and_right.clone()), increment_name()).to_rc();
-                    node_and_left.borrow_mut().parent = Some(node.clone());
-                    node_and_right.borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                    let node = Node::new_or(Some(
+                        node_and_left.as_rc()),
+                        Some(node_and_right.as_rc()),
+                        increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 '>' => {
                     let right = stack.pop().ok_or_else(|| "Expected right-hand operator for >".to_string())?;
@@ -104,10 +102,9 @@ impl Node
                     let node = Node::new_or(
                         Some(Node::negate_subtree(&left.borrow())),
                         Some(right),
-                        increment_name()).to_rc();
-                    node.borrow().left.clone().unwrap().borrow_mut().parent = Some(node.clone());
-                    node.borrow().right.clone().unwrap().borrow_mut().parent = Some(node.clone());
-                    stack.push(node);
+                        increment_name());
+                    Node::assign_parents_to_children(&node);
+                    stack.push(node.to_rc());
                 },
                 ' ' => continue,
                 _ => return Err(format!("Invalid character: {}", c)),
@@ -123,6 +120,7 @@ impl Node
                 name.push_str(&COUNT.to_string());
                 COUNT += 1;
             }
+            println!("Creating : {}", name);
             name
         }
     }
