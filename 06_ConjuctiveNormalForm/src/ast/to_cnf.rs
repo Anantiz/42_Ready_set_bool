@@ -203,35 +203,35 @@ impl AstNode {
                 println!("Tseytin Or");
                 AstNode::new_and(
                     Some(AstNode::new_or(
-                        Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
-                            &nnf_node.borrow().name,
-                        ))))),
-                        Some(AstNode::new_or(
-                            Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
-                            ))),
-                            Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
-                            ))),
-                        )),
+                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                &nnf_node.borrow().name,
+                            ))))),
+                            Some(AstNode::new_or(
+                                    Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                                    ))),
+                                    Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                                    ))),
+                            )),
                     )),
                     Some(AstNode::new_and(
-                        Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
-                            ))))),
-                            Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().name,
-                            ))),
-                        )),
-                        Some(AstNode::new_or(
-                            Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
-                            ))))),
-                            Some(AstNode::new_literal(get_char(
-                                &nnf_node.borrow().name,
-                            ))),
-                        )),
+                            Some(AstNode::new_or(
+                                    Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().left.as_ref().unwrap().borrow().name,
+                                    ))))),
+                                    Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().name,
+                                    ))),
+                            )),
+                            Some(AstNode::new_or(
+                                    Some(AstNode::new_not(Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().right.as_ref().unwrap().borrow().name,
+                                    ))))),
+                                    Some(AstNode::new_literal(get_char(
+                                        &nnf_node.borrow().name,
+                                    ))),
+                            )),
                     )),
                 )
             }

@@ -36,4 +36,8 @@ impl Node {
 		node.parent = parent;
 		node
 	}
+
+	pub fn to_rc(self) -> Rc<RefCell<Node>> {
+		Rc::new(RefCell::new(self))
+	}
 }
