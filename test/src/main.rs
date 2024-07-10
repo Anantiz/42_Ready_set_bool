@@ -1,41 +1,18 @@
-use lazy_static::lazy_static;
-use std::sync::Mutex;
 
-lazy_static! {
-    static ref GLOBAL_VAR: Mutex<String> = Mutex::new(String::new());
-}
-
-fn increment_name(name: &mut String) {
-    let mut chars: Vec<char> = name.chars().collect();
-    let mut carry = true;
-
-    for i in (0..chars.len()).rev() {
-        if carry {
-            if chars[i] == 'Z' {
-                chars[i] = 'A';
-            } else {
-                chars[i] = (chars[i] as u8 + 1) as char;
-                carry = false;
-            }
-        }
+fn increment_name() -> String {
+    static mut COUNT : u32 = 0;
+    let mut name = String::from("p");
+    unsafe {
+        name.push_str(&COUNT.to_string());
+        COUNT += 1;
     }
-
-    if carry {
-        chars.insert(0, 'A');
-    }
-
-    name.clear();
-    name.extend(chars);
+    name
 }
 
 fn main() {
     {
-        let mut data = GLOBAL_VAR.lock().unwrap();
-        *data = String::from("A");
-
         for _ in 0..(26 * 3) {
-            println!("{}", *data);
-            increment_name(&mut *data);
+            println!("{}",  increment_name());
         }
     }
 }

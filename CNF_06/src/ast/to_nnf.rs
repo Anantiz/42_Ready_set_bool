@@ -17,7 +17,7 @@ impl Node {
 					let left = inner(node.left.clone().unwrap());
 					let right = inner(node.right.clone().unwrap());
 					match (left, right) {
-						(Some(left), Some(right)) => Some(Node::new_and(Some(left), Some(right), None, node.name.clone()).to_rc()),
+						(Some(left), Some(right)) => Some(Node::new_and(Some(left), Some(right), node.name.clone()).to_rc()),
 						_ => None,
 					}
 				},
@@ -25,14 +25,14 @@ impl Node {
 					let left = inner(node.left.clone().unwrap());
 					let right = inner(node.right.clone().unwrap());
 					match (left, right) {
-						(Some(left), Some(right)) => Some(Node::new_or(Some(left), Some(right), None, node.name.clone()).to_rc()),
+						(Some(left), Some(right)) => Some(Node::new_or(Some(left), Some(right), node.name.clone()).to_rc()),
 						_ => None,
 					}
 				},
 				Op::Not => {
 					let left = inner(node.left.clone().unwrap());
 					match left {
-						Some(left) => Some(Node::new_not(Some(left), None, node.name.clone()).to_rc()),
+						Some(left) => Some(Node::new_not(Some(left), node.name.clone()).to_rc()),
 						_ => None,
 					}
 				},

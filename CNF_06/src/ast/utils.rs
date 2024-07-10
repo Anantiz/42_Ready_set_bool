@@ -10,28 +10,24 @@ impl Node {
 	/// Costly operation, but allow things clone() wouldn;t
 	pub fn duplicate(&self) -> Node
 	{
+		// Might not have parent set corectly
 		match & self.operator {
 			Op::And => Node::new_and(
 				Some(self.left.clone().unwrap().borrow().duplicate().to_rc()),
 				Some(self.right.clone().unwrap().borrow().duplicate().to_rc()),
-				None,
 				self.name.clone()
 			),
 			Op::Or => Node::new_or(
 				Some(self.left.clone().unwrap().borrow().duplicate().to_rc()),
 				Some(self.right.clone().unwrap().borrow().duplicate().to_rc()),
-				None,
 				self.name.clone()
 			),
 			Op::Not => Node::new_not(
 				Some(self.left.clone().unwrap().borrow().duplicate().to_rc()),
-				None,
 				self.name.clone()
 			),
 			Op::Lit(val) => Node::new_lit(
-				None,
 				self.name.clone(),
-				val.clone()
 			),
 		}
 	}
@@ -46,23 +42,21 @@ impl Node {
 				Op::And => Node::new_or(
 					Some(inner(node.left.clone().unwrap())),
 					Some(inner(node.right.clone().unwrap())),
-					None,
 					node.name.clone()
 				).to_rc(),
 				Op::Or => Node::new_and(
 					Some(inner(node.left.clone().unwrap())),
 					Some(inner(node.right.clone().unwrap())),
-					None,
 					node.name.clone()
 				).to_rc(),
 				Op::Not => node.left.clone().unwrap(),
 				Op::Lit(_) => Node::new_not(
 					Some(node.duplicate().to_rc()),
-					None,
 					node.name.clone()
 				).to_rc(),
 			}
 		}
 		inner(self.duplicate().to_rc())
 	}
+
 }

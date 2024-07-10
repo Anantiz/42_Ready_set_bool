@@ -21,4 +21,49 @@ impl Node {
 		// Use tseytin transformation to convert the tree to CNF
 	}
 
+	/// Create a new tree without affecting the original tree
+	fn tseytin_transform_and(& self) -> Node {
+		/*
+		*	When the node is a Conjuction:
+		*		As (? ∧ ?) where
+		*			> The and node is a
+		*			> the left child is b
+		*			> the right child is c
+		*	We can transform it to:
+		*		(¬a ∨ b) ∧ (¬a ∨ c) ∧ (¬b ∨ ¬c ∨ a)
+		*		Since we introduce new literals, we will use the node names for their Lit(String) values
+		*/
+		let a = Node::new_lit(self.name.clone());
+		let b = Node::new_lit(self.left.clone().unwrap().borrow().name.clone());
+		let c = Node::new_lit(self.right.clone().unwrap().borrow().name.clone());
+
+		let not_a = Node::new_not(Some(a.to_rc()), a.name.clone());
+		let not_b = Node::new_not(Some(b.to_rc()), b.name.clone());
+		let not_c = Node::new_not(Some(c.to_rc()), c.name.clone());
+
+		let clause_1 = Node::new_or(Some(not_a.duplicate().to_rc()), Some(b.duplicate().to_rc()), Node::increment_name());
+		let clause_2 = Node::new_or(Some(not_a.duplicate().to_rc()), Some(c.duplicate().to_rc()), Node::increment_name());
+		let clause_3 = Node::new_or(
+			Some(not_b.duplicate().to_rc()),
+			Some(Node::new_or(Some(not_c.duplicate().to_rc()), Some(a.duplicate().to_rc()), Node::increment_name()).to_rc()),
+			Node::increment_name()
+		);
+		let conjucted = Node::new_and(
+			Some(clause_1.to_rc()),
+			Some(Node::new_and(Some(clause_2.to_rc()), Some(clause_3.to_rc()), Node::increment_name()).to_rc()),
+			Node::increment_name()
+		);
+	}
+
+	/// Used to name fresh literals
+	fn increment_name() -> String {
+		static mut COUNT : u32 = 0;
+		let mut name = String::from("t_");
+		unsafe {
+			name.push_str(&COUNT.to_string());
+			COUNT += 1;
+		}
+		name
+	}
+
 }
