@@ -5,7 +5,7 @@ impl Node
 {
 	/// TTTF
 	/// Prints the tree as only NAND gates
-	fn to_nand_paradise(& self) -> String {
+	pub fn to_nand_paradise(& self) -> String {
 		match &self.operator {
 			Op::Lit(val) => format!("{}", val.clone()),
 			Op::Not => {
