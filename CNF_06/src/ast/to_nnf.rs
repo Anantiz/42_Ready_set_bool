@@ -8,9 +8,19 @@ impl Node {
 
 	pub fn negate(&mut self) -> Rc<RefCell<Node>>
 	{
+		fn increment_name() -> String {
+            static mut COUNT : u32 = 0;
+            let mut name = String::from("n");
+            unsafe {
+                name.push_str(&COUNT.to_string());
+                COUNT += 1;
+            }
+            name
+        }
+
 		match self.operator {
 			Op::Not => self.left.clone().unwrap(),
-			Op::Lit(_) => Node::new_not(Some(self.duplicate().to_rc()), self.name.clone()).to_rc(),
+			Op::Lit(_) => Node::new_not(Some(self.duplicate().to_rc()), increment_name()).to_rc(),
 			Op::And => Node::new_or(
 				Some(self.left.clone().unwrap().borrow_mut().negate()),
 				Some(self.right.clone().unwrap().borrow_mut().negate()),

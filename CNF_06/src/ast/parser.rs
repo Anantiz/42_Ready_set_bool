@@ -21,6 +21,7 @@ impl Node
         for c in str.chars() {
             match c {
                 'A'..='Z' => stack.push(Node::new_lit(c.to_string()).to_rc()),
+                'a'..='z' => stack.push(Node::new_lit(c.to_string()).to_rc()),
                 '!' => {
                     let child = stack.pop().ok_or_else(|| "Expected target for NOT".to_string())?;
                     let node = Node::new_not(Some(child.clone()), increment_name());

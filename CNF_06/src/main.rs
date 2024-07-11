@@ -20,14 +20,18 @@ fn main() {
     let tree : Option<Rc<RefCell<Node>>> = tree.unwrap();
     if let Some(tree) = tree.clone() {
         println!("Parsed:   {}", tree.borrow().to_rpn());
+        println!("Infix:    {}", tree.borrow());
     } else {
         println!("Empty tree");
+        return;
     }
-    let tree : Rc<RefCell<Node>> = tree.unwrap();
+    println!("");
 
-    let cnf = tree.borrow().to_cnf();
+    let tree : Rc<RefCell<Node>> = tree.unwrap();
+    let cnf = tree.borrow().to_cnf_short();
     if let Some(cnf) = cnf {
-        println!("\nCNF form: {}", cnf.borrow().to_rpn());
+        println!("Cnf form as RPN:  {}", cnf.borrow().to_rpn());
+        println!("CNF form infix:   {}", cnf.borrow());
     } else {
         println!("Empty CNF");
     }
