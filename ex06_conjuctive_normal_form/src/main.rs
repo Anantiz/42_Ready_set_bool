@@ -28,9 +28,9 @@ fn main() {
     println!("");
 
     let tree : Rc<RefCell<Node>> = tree.unwrap();
-    let cnf = tree.borrow().to_cnf_short();
+    let cnf = tree.borrow().to_cnf();
     if let Some(cnf) = cnf {
-        println!("Cnf form as RPN:  {}", cnf.borrow().to_rpn());
+        println!("\nCnf form as RPN:  {}\n", cnf.borrow().to_rpn());
         println!("CNF form infix:   {}", cnf.borrow());
     } else {
         println!("Empty CNF");

@@ -6,20 +6,6 @@ use std::cell::RefCell;
 
 impl Node {
 
-	/// Does 2 pass-through to ensure minimal expression
-	pub fn to_cnf_short(&self) -> Option<Rc<RefCell<Node>>> {
-		println!("First Pass:");
-		let first_pass = self.to_cnf();
-		if first_pass.is_none() {
-			return None;
-		}
-		let first_pass = first_pass.unwrap();
-		println!("Cnf form as RPN:  {}", first_pass.borrow().to_rpn());
-        println!("CNF form infix:   {}", first_pass.borrow());
-		println!("\nSecond  Pass:");
-		return first_pass.borrow().to_cnf();
-	}
-
 	/// Will create a new tree in CNF form
 	/// Algorithm Reference: https://profs.info.uaic.ro/stefan.ciobaca/logic-2018-2019/notes7.pdf
 	///   > Detailed explanation with proofs and examples (that even uses an AST awesome!)
@@ -31,9 +17,8 @@ impl Node {
 		}
 		println!("NNF form: {}", nnf.clone().unwrap().borrow().to_rpn());
 
-		let mut cnf_root : Option<Rc<RefCell<Node>>> = None;
-		let mut tail : Option<Rc<RefCell<Node>>> = None;
 		let mut iterator = Node::new_iterator(nnf.unwrap());
+		let stack = &mut Vec::new();
 
 		loop {
 			let it = iterator.next_node();
@@ -44,13 +29,13 @@ impl Node {
 			let node = it.unwrap().borrow().clone();
 			let tseytin_node = match & node.operator {
 				Op::And => {
-					Some(node.tseytin_transform_and())
+					Some(node.tseytin_transform_and().to_rc())
 				},
 				Op::Or => {
-					Some(node.tseytin_transform_or())
+					Some(node.tseytin_transform_or().to_rc())
 				},
 				Op::Not => {
-					Some(node.tseytin_transform_not())
+					Some(node.tseytin_transform_not().to_rc())
 				},
 				Op::Lit(_) => {
 					None
@@ -59,14 +44,21 @@ impl Node {
 			if tseytin_node.is_none() {
 				continue;
 			}
-			if cnf_root.is_none() {
-				cnf_root = Some(tseytin_node.clone().unwrap().as_rc());
-				tail = Some(tseytin_node.unwrap().as_rc());
-			} else{
-				tail = Some(Node::merge_as_conjuction(&mut tail.unwrap(), tseytin_node.unwrap()));
-			}
+			stack.push(tseytin_node);
 		}
-		cnf_root
+		let mut root = stack.pop().unwrap();
+		if root.is_none() {
+			return None;
+		}
+
+		loop {
+			let node = stack.pop();
+			if node.is_none() {
+				break;
+			}
+			root = Some(Node::new_and(node.unwrap(), root, "Bridge".to_string()).to_rc());
+		}
+		return root;
 	}
 
 	fn tseytin_transform_not(& self) -> Node {

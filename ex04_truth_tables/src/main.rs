@@ -90,8 +90,12 @@ fn print_truth_table(line : &str)
 
 fn main()
 {
-	let line = "ABCD&|&";
-	print_truth_table(&line);
+	print_truth_table(& "AB&".to_string());
+	print_truth_table(& "AB|".to_string());
+	print_truth_table(& "AB^".to_string());
+	print_truth_table(& "AB>".to_string());
+	print_truth_table(& "AB=".to_string());
 
+	print_truth_table(& "AB&C|D^".to_string());
 }
 

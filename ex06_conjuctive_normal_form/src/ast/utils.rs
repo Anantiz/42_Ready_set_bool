@@ -79,35 +79,4 @@ impl Node {
 			Op::Lit(_) => {},
 		}
 	}
-
-	/// 1. Creates a 'bridge' conjunction node
-	/// 2. Sets the Content of 'tail' as the left child
-	/// 3. Sets 'other' as the right child
-	/// 4. Sets the tail content to be 'bridge'
-	/// 5. Returns the new tail of the tree
-	pub fn merge_as_conjuction(tail : &mut Rc<RefCell<Node>>, other: Node) -> Rc<RefCell<Node>>
-	{
-		// println!("Merging as conjuction {} and {}", tail.borrow().name, other.name);
-
-		let left = tail.clone();
-		let tail_parent = left.borrow().parent.clone();
-		let bridge = Node::new_and(Some(left), Some(other.to_rc()), increment_name());
-		Node::assign_parents_to_children(&bridge);
-		let bridge = bridge.to_rc();
-
-		*tail = bridge.clone();
-		bridge.borrow_mut().parent = tail_parent;
-		return bridge.borrow().right.clone().unwrap();
-
-		fn increment_name() -> String {
-			static mut COUNT : u32 = 0;
-			let mut name = String::from("a_");
-			unsafe {
-				name.push_str(&COUNT.to_string());
-				COUNT += 1;
-			}
-			name
-		}
-	}
-
 }

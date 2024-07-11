@@ -3,5 +3,8 @@ pub mod constructors;
 
 pub mod parser;
 pub mod utils;
+pub mod iterator;
 
-pub mod to_nand_paradise;
+pub mod to_string;
+pub mod to_nnf;
+pub mod to_cnf;

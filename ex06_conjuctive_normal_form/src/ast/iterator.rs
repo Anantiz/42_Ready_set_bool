@@ -18,7 +18,7 @@ impl Node
 				inner(node.borrow().clone().left.unwrap(), stack);
 			}
 		}
-		let mut it = TreeIterator { stack: Vec::new() };
+		let mut it = TreeIterator { stack: Vec::new()};
 		inner(root, &mut it.stack);
 		it
 
