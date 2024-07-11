@@ -27,12 +27,25 @@ fn main() {
     }
     println!("");
 
+
     let tree : Rc<RefCell<Node>> = tree.unwrap();
+
+    print!("Original Input: ");
+    let sat = tree.borrow_mut().dumbfuck_sat();
+    match sat {
+        Err(s) => println!("Error: {}", s),
+        Ok(b) => println!("Satisfiable: {}", b)
+    }
+
+    print!("SAT using CNF:  ");
     let cnf = tree.borrow().to_cnf();
-    if let Some(cnf) = cnf {
-        println!("\nCnf form as RPN:  {}\n", cnf.borrow().to_rpn());
-        println!("CNF form infix:   {}", cnf.borrow());
-    } else {
-        println!("Empty CNF");
+    if cnf.is_none() {
+        println!("Error: Could not convert to CNF");
+        return;
+    }
+    let sat = tree.borrow_mut().dumbfuck_sat();
+    match sat {
+        Err(s) => println!("Error: {}", s),
+        Ok(b) => println!("Satisfiable: {}", b)
     }
 }

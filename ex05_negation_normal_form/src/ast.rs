@@ -144,7 +144,11 @@ impl AstNode
                 _ => return Err(format!("Invalid character: {}", c))
             }
         }
-        return Ok(stack.pop());
+        let root = Ok(stack.pop());
+        if !stack.is_empty() {
+            return Err("Too much literals".to_string());
+        }
+        return root;
     }
 
     pub fn to_rpn(&self) -> String

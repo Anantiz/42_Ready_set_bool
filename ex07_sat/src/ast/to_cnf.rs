@@ -15,7 +15,10 @@ impl Node {
 		if nnf.is_none() {
 			return None;
 		}
-		println!("NNF form: {}", nnf.clone().unwrap().borrow().to_rpn());
+
+		if let Op::Lit(_) = nnf.clone().unwrap().borrow().operator {
+			return Some(nnf.unwrap());
+		}
 
 		let mut iterator = Node::new_iterator(nnf.unwrap());
 		let stack = &mut Vec::new();
@@ -46,7 +49,11 @@ impl Node {
 			}
 			stack.push(tseytin_node);
 		}
-		let mut root = stack.pop().unwrap();
+		let root = stack.pop();
+		if root.is_none() {
+			return None;
+		}
+		let mut root = root.unwrap();
 		if root.is_none() {
 			return None;
 		}

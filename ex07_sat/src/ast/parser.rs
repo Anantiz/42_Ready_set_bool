@@ -111,7 +111,11 @@ impl Node
                 _ => return Err(format!("Invalid character: {}", c)),
             }
         }
-        return Ok(stack.pop());
+        let root = Ok(stack.pop());
+        if !stack.is_empty() {
+            return Err("Too much literals".to_string());
+        }
+        return root;
 
         /// Used to name fresh literals
         fn increment_name() -> String {

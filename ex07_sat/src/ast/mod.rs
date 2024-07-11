@@ -8,3 +8,6 @@ pub mod iterator;
 pub mod to_string;
 pub mod to_nnf;
 pub mod to_cnf;
+
+pub mod sat;
+pub mod set_vals;

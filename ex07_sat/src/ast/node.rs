@@ -16,6 +16,7 @@ pub struct Node {
 	pub left: Option<Rc<RefCell<Node>>>,
 	pub right: Option<Rc<RefCell<Node>>>,
 	pub parent: Option<Rc<RefCell<Node>>>,
+	pub value : Option<Rc<RefCell<bool>>>,
 }
 
 impl Node {
@@ -26,6 +27,7 @@ impl Node {
 			left: None,
 			right: None,
 			parent: None,
+			value: None,
 		}
 	}
 }
