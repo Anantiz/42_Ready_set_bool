@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "cnf"
+name = "ex08_power_set"
 version = "0.1.0"
