@@ -42,6 +42,22 @@ pub fn print_set(set: &Set) {
 	println!("}}");
 }
 
+pub fn set_get_string(set: &Set) -> String {
+	let mut n = set.len();
+	let mut string = String::new();
+	string.push_str("{");
+	for val in set.iter() {
+		if n == 1 {
+			string.push_str(&val.to_string());
+			break;
+		}
+		n -= 1;
+		string.push_str(&format!("{}, ", val));
+	}
+	string.push_str("}");
+	string
+}
+
 pub fn sort_power_set_by_size(powerset: &Vec<Set>) -> Vec<Set> {
 	let mut powerset = powerset.clone();
 	powerset.sort_by(|a, b| a.len().cmp(&b.len()));
