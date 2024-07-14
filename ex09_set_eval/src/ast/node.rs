@@ -1,7 +1,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
-type Set = std::collections::HashSet<u32>;
+use crate::set::Set;
+
 
 #[derive(Clone)]
 pub enum Op {
@@ -12,13 +13,13 @@ pub enum Op {
 }
 
 #[derive(Clone)]
-pub struct Node<'a> {
+pub struct Node {
 	pub name: String,
 	pub operator: Op,
 	pub left: Option<Rc<RefCell<Node>>>,
 	pub right: Option<Rc<RefCell<Node>>>,
 	pub parent: Option<Rc<RefCell<Node>>>,
-	pub value : Option<&'aSet>, // read only ref, so no Rc<RefCell<Set>>
+	pub value : Option<Rc<RefCell<Set>>>,
 }
 
 impl Node {

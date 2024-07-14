@@ -1,5 +1,11 @@
 use crate::ast::node::*;
-mod set;
+
+use std::rc::Rc;
+use std::cell::RefCell;
+
+use crate::set::Set;
+use crate::set::set::set_get_string;
+
 
 impl Node
 {
@@ -20,7 +26,7 @@ impl Node
 					return format!("{}", val_name.clone())
 				}
 				let value = value.unwrap();
-				return format!("{}[{}]", val_name.clone(), set::set::set_get_string(&value.borrow()));
+				return format!("{}[{}]", val_name.clone(), set_get_string(&value.borrow()));
 			}
 		}
 	}
