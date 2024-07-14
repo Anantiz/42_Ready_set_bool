@@ -1,0 +1,6 @@
+[package]
+name = "ex010_curve"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]

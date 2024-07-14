@@ -17,7 +17,7 @@ impl Node
 				if !map.contains_key(name) {
 					let set = sets.get(*size.borrow() as usize);
 					if set.is_none() {
-						return Err(format!("Could not find set for literal {}", name));
+						return Err(format!("Error: Could not find a set to bind with literal '{}'", name));
 					}
 					let set = set.unwrap();
 					map.insert(name.clone(), set.clone());
@@ -28,17 +28,20 @@ impl Node
 				return Ok(());
 			},
 			Op::Not => {
-				if self.left.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets).is_err() {
-					return Err(format!("Could not set values for NOT"));
+				let ret = self.left.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets);
+				if  ret.is_err() {
+					return Err(ret.err().unwrap());
 				}
 				return Ok(());
 			},
 			_ => {
-				if self.left.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets).is_err() {
-					return Err(format!("Could not set values for AND/OR"));
+				let ret = self.left.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets);
+				if ret.is_err() {
+					return Err(ret.err().unwrap());
 				}
-				if self.right.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets).is_err() {
-					return Err(format!("Could not set values for AND/OR"));
+				let ret = self.right.as_mut().unwrap().borrow_mut().set_vals_rec(map, size.clone(), sets);
+				if ret.is_err() {
+					return Err(ret.err().unwrap());
 				}
 				return Ok(());
 			},
