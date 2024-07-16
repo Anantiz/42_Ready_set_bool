@@ -1,5 +1,5 @@
 #[inline(always)]
-fn add(a: u32, b: u32) -> u32
+fn adder(a: u32, b: u32) -> u32
 {
 
 	// Multi-Steps:
@@ -11,7 +11,7 @@ fn add(a: u32, b: u32) -> u32
 	//  3.Combine the two masks and re-carry if needed
 	if (pow_mask & digit_mask) != 0
 	{
-		return add(pow_mask, digit_mask);
+		return adder(pow_mask, digit_mask);
 	}
 	else
 	{
@@ -24,24 +24,24 @@ fn main()
 	let a : u32 = 3;
 	let b: u32 = 1;
 
-	let ret = add(a, b);
+	let ret = adder(a, b);
 	println!("{} + {} = {}", a, b, ret);
 
 	let a : u32 = 2;
 	let b: u32 = 40;
 
-	let ret = add(a, b);
+	let ret = adder(a, b);
 	println!("{} + {} = {}", a, b, ret);
 
 	let a : u32 = 0;
 	let b: u32 = 1;
 
-	let ret = add(a, b);
+	let ret = adder(a, b);
 	println!("{} + {} = {}", a, b, ret);
 
 	let a : u32 = 0;
 	let b: u32 = 0;
 
-	let ret = add(a, b);
+	let ret = adder(a, b);
 	println!("{} + {} = {}", a, b, ret);
 }

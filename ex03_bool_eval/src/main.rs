@@ -66,6 +66,10 @@ fn rpn_evaluate(line : &str) -> bool
 	return stack.pop().unwrap();
 }
 
+fn eval_formula(formula: &str) -> bool {
+	rpn_evaluate(formula)
+}
+
 fn main()
 {
 	let test_cases : [&str; 7] = [
@@ -80,6 +84,6 @@ fn main()
 
 	for case in test_cases.iter()
 	{
-		println!("Input: {}\nResult: {}\n", case, rpn_evaluate(case));
+		println!("Input: {}\nResult: {}\n", case, eval_formula(case));
 	}
 }
