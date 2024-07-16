@@ -34,7 +34,6 @@ fn get_z_curve_index(x: u32, y: u32) -> u32 {
 	let mut x_value = 0;
 	let mut mask = x;
 	let mut power_of_4 = 1;
-
 	while mask > 0 {
 		if mask & 1 == 1 {
 			x_value += power_of_4;
@@ -44,9 +43,8 @@ fn get_z_curve_index(x: u32, y: u32) -> u32 {
 	}
 
 	let mut y_value = 0;
-	let mut mask = y;
-	let mut power_of_4 = 1;
-
+	mask = y;
+	power_of_4 = 1;
 	while mask > 0 {
 		if mask & 1 == 1 {
 			y_value += power_of_4;
@@ -54,8 +52,7 @@ fn get_z_curve_index(x: u32, y: u32) -> u32 {
 		power_of_4 *= 4;
 		mask >>= 1;
 	}
-	y_value <<= 1;
-	return x_value | y_value;
+	return x_value | (y_value << 1);
 }
 
 fn get_z_curve_array(size: usize) -> Vec<Vec<u32>> {
