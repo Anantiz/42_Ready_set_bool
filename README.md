@@ -1,4 +1,4 @@
-Ready Set Bool from 42 Math branch
+## Ready Set Bool from 42 Math branch
 
 Usefull links:
 
