@@ -115,6 +115,7 @@ fn main()
     }
 }
 
+// Left for the lore
 /*
 fn reverse_map(n: f64) -> (u16, u16) {
     const MAX: f64 = (2u64.pow(32) - 1) as f64;
@@ -143,6 +144,4 @@ fn reverse_map(n: f64) -> (u16, u16) {
 
     (x, y)
 }
-
-
 */

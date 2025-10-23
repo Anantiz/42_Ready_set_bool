@@ -1,3 +1,19 @@
+/*
+
+When faced with implementing a SAT solver, I had two choices:
+1. Spend 2 weeks implementing DPLL/CDCL properly
+2. Brute force it with clear complexity limits
+
+I chose sanity. The `dumbfuck_sat()` implementation:
+- Works correctly for reasonable inputs (≤26 literals, our RPN only handles single-letter literals so it's fine)
+- Has clear, honest error messages
+- Saved my mental health
+- Is appropriately named
+
+Sometimes "good enough and finished" beats "perfect and never done."
+
+*/
+
 use crate::ast::node::*;
 use crate::ast::node::Op;
 
